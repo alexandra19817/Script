@@ -31,8 +31,9 @@ def analyze_stock(row):
                 recommendation = "Beobachten / Nachkaufen"
 
             # Dividende abrufen
-            dividend = info.get("dividendRate", 0)
-
+            info = yf.Ticker(ticker).info
+            dividende = info.get("dividendRate", None)
+            
             return pd.Series({
                 "Aktueller Kurs (€)": round(current_price, 2),
                 "Dividende p.a. (€)": round(dividend, 2) if dividend else "–",
@@ -41,7 +42,12 @@ def analyze_stock(row):
                 "Empfehlung": recommendation
             })
         else:
-            return pd.Series({})
+             return pd.Series({
+        "Aktueller Kurs": None,
+        "Gewinn/Verlust (€)": None,
+        "Performance (%)": None,
+        "Empfehlung": "Keine Daten"
+    })
     except Exception as e:
         return pd.Series({})
 
