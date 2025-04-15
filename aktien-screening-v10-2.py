@@ -29,6 +29,7 @@ for _, row in df_portfolio.iterrows():
             yaxis_title="Kurs (€)"
         )
         st.plotly_chart(fig, use_container_width=True)
+        
 if uploaded_file:
     xls = pd.ExcelFile(uploaded_file)
     df_portfolio = pd.read_excel(xls, sheet_name="Portfolio")
