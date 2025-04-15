@@ -144,8 +144,48 @@ if uploaded_file:
 
     # 📋 Sortierte Analyseansicht
     st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
-    df_analysis_view = df_analysis[relevante_spalten].sort_values(by="Performance (%)", ascending=False, na_position="last")
-    st.dataframe(df_analysis_view, use_container_width=True)
+
+# Neu: Sortierte Version für Filter & Chart
+df_analysis_view = df_analysis[relevante_spalten].sort_values(by="Performance (%)", ascending=False, na_position="last")
+
+# 🔍 Suchfeld
+search_query = st.text_input("🔎 Aktie suchen (Ticker oder Name)", "")
+
+# 🔄 Gefilterte Ansicht
+filtered_df = df_analysis_view[
+    df_analysis_view["Ticker"].str.contains(search_query, case=False, na=False) |
+    df_analysis_view["Name"].astype(str).str.contains(search_query, case=False, na=False)
+]
+
+st.dataframe(filtered_df, use_container_width=True)
+
+# 📊 Balkendiagramm Performance
+if not filtered_df.empty:
+    fig_perf = go.Figure()
+    fig_perf.add_trace(go.Bar(
+        x=filtered_df["Ticker"],
+        y=filtered_df["Performance (%)"],
+        text=filtered_df["Performance (%)"],
+        textposition="auto"
+    ))
+    fig_perf.update_layout(
+        title="📊 Performance pro Aktie",
+        xaxis_title="Ticker",
+        yaxis_title="Performance (%)"
+    )
+    st.plotly_chart(fig_perf, use_container_width=True)
+
+# 💡 Hinweise bei extremen Fällen
+extreme_winners = filtered_df[filtered_df["Performance (%)"] > 100]
+extreme_losers = filtered_df[filtered_df["Performance (%)"] < -50]
+
+if not extreme_winners.empty:
+    st.success("🚀 Diese Aktien haben über **+100 % Performance** erreicht!")
+    st.dataframe(extreme_winners[["Ticker", "Name", "Performance (%)", "Empfehlung"]])
+
+if not extreme_losers.empty:
+    st.error("⚠️ Diese Aktien haben über **–50 % Verlust** – prüfe ob Handlungsbedarf besteht.")
+    st.dataframe(extreme_losers[["Ticker", "Name", "Performance (%)", "Empfehlung"]])
 
     # 📊 Kursverläufe
     st.subheader("📊 Kursverlauf mit Kaufpreis")
