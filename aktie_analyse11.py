@@ -15,10 +15,15 @@ uploaded_file = st.file_uploader("Lade deine Excel-Datei hoch (mit den Sheets: P
 # Hilfsfunktion: Kaufpreis bereinigen
 def clean_kaufpreis(value):
     try:
-        clean = re.sub(r"[^\d,.-]", "", str(value)).replace(",", ".")
+        if pd.isnull(value):
+            return None
+        value_str = str(value).strip()
+        if value_str == "" or value_str.lower() in ["nan", "none", "-", "—"]:
+            return None
+        clean = re.sub(r"[^\d,.-]", "", value_str).replace(",", ".")
         return float(clean)
-    except:
-        raise ValueError(f"Konnte Kaufpreis nicht konvertieren: {value}")
+    except Exception:
+        return None
 
 # Analysefunktion
 def analyze_stock(row):
@@ -36,6 +41,9 @@ def analyze_stock(row):
 
         current_price = float(data["Close"].iloc[-1])
         kaufpreis = clean_kaufpreis(row["Kaufpreis"])
+        if kaufpreis is None:
+            raise ValueError(f"Ungültiger Kaufpreis: {row['Kaufpreis']}")
+
         anzahl = float(row["Anzahl"])
 
         perf_abs = (current_price - kaufpreis) * anzahl
@@ -84,27 +92,27 @@ if uploaded_file:
         "Gewinn/Verlust (€)", "Performance (%)", "Dividende p.a. (€)", "Empfehlung"
     ]
 
-    # 📁 Anzeige des analysierten Portfolios (oben)
+    # 📁 Anzeige des analysierten Portfolios
     st.subheader("📁 Dein Portfolio (inkl. Analyse)")
     st.dataframe(df_analysis[relevante_spalten], use_container_width=True)
 
-    # 👁️ Watchlist anzeigen
+    # 👁️ Watchlist
     st.subheader("👁️ Deine Watchlist")
     st.dataframe(df_watchlist, use_container_width=True)
 
-    # 📋 Analyseauswertung
+    # 📋 Sortierte Analyseansicht
     st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
-    df_analysis_view = df_analysis[relevante_spalten].sort_values(by="Performance (%)", ascending=False)
+    df_analysis_view = df_analysis[relevante_spalten].sort_values(by="Performance (%)", ascending=False, na_position="last")
     st.dataframe(df_analysis_view, use_container_width=True)
 
-    # 📊 Kursverläufe anzeigen
+    # 📊 Kursverläufe
     st.subheader("📊 Kursverlauf mit Kaufpreis")
     for index, row in df_portfolio.iterrows():
         ticker = row["Ticker"]
         kaufpreis = clean_kaufpreis(row["Kaufpreis"])
         data = yf.Ticker(ticker).history(period="5y")
 
-        if not data.empty:
+        if not data.empty and kaufpreis is not None:
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=data.index, y=data["Close"], mode="lines", name="Kurs"))
             fig.add_hline(y=kaufpreis, line_dash="dot", line_color="red", name="Kaufpreis")
@@ -115,7 +123,7 @@ if uploaded_file:
             )
             st.plotly_chart(fig, use_container_width=True, key=f"chart_{index}")
         else:
-            st.warning(f"⚠️ Keine Kursdaten für {ticker} verfügbar.")
+            st.warning(f"⚠️ Keine Kursdaten für {ticker} verfügbar oder Kaufpreis fehlt.")
 
     # 📈 CAGR-Berechnung
     st.subheader("📈 Langfristige Performance (CAGR)")
@@ -133,7 +141,7 @@ if uploaded_file:
     if cagr_results:
         st.dataframe(pd.DataFrame(cagr_results), use_container_width=True)
 
-    # 💾 Exportieren
+    # 💾 Excel-Export
     st.subheader("💾 Ergebnisse als Excel speichern")
     excel_buffer = io.BytesIO()
     with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
