@@ -28,33 +28,47 @@ if uploaded_file:
     st.subheader("📈 Kursentwicklung seit Kauf")
 
     def analyze_stock(row):
-        ticker = row["Ticker"]
-        try:
-            data = yf.Ticker(ticker).history(start=row["Kaufdatum"])
-            if not data.empty:
-                current_price = data["Close"].iloc[-1]
-                perf_abs = (current_price - row["Kaufpreis"]) * row["Anzahl"]
-                perf_pct = ((current_price - row["Kaufpreis"]) / row["Kaufpreis"]) * 100
-                recommendation = "Halten"
-                if perf_pct > 25:
-                    recommendation = "Teilweise verkaufen"
-                elif perf_pct < -20:
-                    recommendation = "Beobachten / Nachkaufen"
+    ticker = row["Ticker"]
+    try:
+        stock = yf.Ticker(ticker)
+        hist = stock.history(start=row["Kaufdatum"])
+        info = stock.info
 
-                return pd.Series({
-                    "Aktueller Kurs": round(current_price, 2),
-                    "Gewinn/Verlust (€)": round(perf_abs, 2),
-                    "Performance (%)": round(perf_pct, 2),
-                    "Empfehlung": recommendation
-                })
-            else:
-                return pd.Series({})
-        except Exception as e:
+        if not hist.empty:
+            current_price = hist["Close"].iloc[-1]
+            perf_abs = (current_price - row["Kaufpreis"]) * row["Anzahl"]
+            perf_pct = ((current_price - row["Kaufpreis"]) / row["Kaufpreis"]) * 100
+
+            # Empfehlung
+            recommendation = "Halten"
+            if perf_pct > 25:
+                recommendation = "Teilweise verkaufen"
+            elif perf_pct < -20:
+                recommendation = "Beobachten / Nachkaufen"
+
+            # Dividende (falls vorhanden)
+            dividend = info.get("dividendRate", 0)
+
+            return pd.Series({
+                "Aktueller Kurs (€)": round(current_price, 2),
+                "Dividende p.a. (€)": round(dividend, 2) if dividend else "–",
+                "Gewinn/Verlust (€)": round(perf_abs, 2),
+                "Performance (%)": round(perf_pct, 2),
+                "Empfehlung": recommendation
+            })
+        else:
             return pd.Series({})
 
+    except Exception as e:
+        return pd.Series({})
     df_analysis = df_portfolio.copy()
     df_analysis = df_analysis.join(df_portfolio.apply(analyze_stock, axis=1))
     st.dataframe(df_analysis, use_container_width=True)
+    
+st.subheader("📈 Portfolio-Analyse mit Dividenden & Empfehlungen")
+df_analysis = df_portfolio.copy()
+df_analysis = df_analysis.join(df_portfolio.apply(analyze_stock, axis=1))
+st.dataframe(df_analysis, use_container_width=True)
 
     # 📊 Kursverlauf + Kaufpreis anzeigen
     st.subheader("📊 Kursverlauf & Kaufpreis")
