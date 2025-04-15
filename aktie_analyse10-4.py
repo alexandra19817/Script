@@ -26,7 +26,6 @@ if uploaded_file:
 
     # 📈 Kursentwicklung seit Kauf + Empfehlung
     st.subheader("📈 Kursentwicklung seit Kauf")
-
     def analyze_stock(row):
     ticker = row["Ticker"]
     try:
