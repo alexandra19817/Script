@@ -73,7 +73,8 @@ if uploaded_file:
     first_row = df_portfolio.iloc[0]
     result = analyze_stock(first_row)
     st.write("Analyse-Ergebnis für die erste Aktie:")
-    st.write(result)df_analysis = df_portfolio.copy()
+    st.write(result)
+    df_analysis = df_portfolio.copy()
     df_analysis = pd.concat([df_portfolio, df_portfolio.apply(analyze_stock, axis=1)], axis=1)
     st.dataframe(df_analysis, use_container_width=True)
 
