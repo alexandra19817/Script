@@ -12,6 +12,52 @@ uploaded_file = st.file_uploader("Lade deine Excel-Datei hoch (mit den Sheets: P
 
 # Analysefunktion
 def analyze_stock(row):
+    import datetime
+    ticker = row["Ticker"]
+    try:
+        kaufdatum = row["Kaufdatum"]
+        if kaufdatum > datetime.datetime.today():
+            raise ValueError("Kaufdatum liegt in der Zukunft")
+
+        stock = yf.Ticker(ticker)
+        data = stock.history(start=kaufdatum)
+
+        if data is None or data.empty:
+            raise ValueError("Keine Kursdaten verfügbar.")
+
+        current_price = float(data["Close"].iloc[-1])
+        kaufpreis = float(str(row["Kaufpreis"]).replace("€", "").replace(",", "."))
+        anzahl = float(row["Anzahl"])
+
+        perf_abs = (current_price - kaufpreis) * anzahl
+        perf_pct = ((current_price - kaufpreis) / kaufpreis) * 100
+
+        info = stock.info
+        dividend = info.get("dividendRate", 0.0)
+
+        if perf_pct > 25:
+            recommendation = "Teilweise verkaufen"
+        elif perf_pct < -20:
+            recommendation = "Beobachten / Nachkaufen"
+        else:
+            recommendation = "Halten"
+
+        return pd.Series({
+            "Aktueller Kurs": round(current_price, 2),
+            "Dividende p.a. (€)": round(dividend, 2) if dividend else 0,
+            "Gewinn/Verlust (€)": round(perf_abs, 2),
+            "Performance (%)": round(perf_pct, 2),
+            "Empfehlung": recommendation
+        })
+
+    except Exception as e:
+        return pd.Series({
+            "Aktueller Kurs": None,
+            "Dividende p.a. (€)": None,
+            "Gewinn/Verlust (€)": None,
+            "Performance (%)": None,
+            "Empfehlung": f"Fehler: {str(e)}"
+        })
     ticker = row["Ticker"]
     try:
         stock = yf.Ticker(ticker)
@@ -60,8 +106,8 @@ if uploaded_file:
     df_portfolio = pd.read_excel(xls, sheet_name="Portfolio")
     df_watchlist = pd.read_excel(xls, sheet_name="Watchlist")
 
-    st.subheader("📁 Dein Portfolio")
-    st.dataframe(df_portfolio, use_container_width=True)
+    st.subheader("📁 Dein Portfolio (mit Analyse)")
+    st.dataframe(df_analysis[relevante_spalten], use_container_width=True)
 
     st.subheader("👁️ Deine Watchlist")
     st.dataframe(df_watchlist, use_container_width=True)
