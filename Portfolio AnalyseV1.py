@@ -45,14 +45,13 @@ def analyze_stock(row):
             raise ValueError(f"Ungültiger Kaufpreis: {row['Kaufpreis']}")
 
         anzahl = float(row["Anzahl"])
-
         perf_abs = (current_price - kaufpreis) * anzahl
         perf_pct = ((current_price - kaufpreis) / kaufpreis) * 100
 
         info = stock.info
         dividend = info.get("dividendRate", 0.0)
 
-        # Neue, intelligentere Logik
+        # Empfehlung
         if perf_pct > 50:
             recommendation = "Klar verkaufen"
         elif perf_pct > 25:
@@ -85,38 +84,6 @@ def analyze_stock(row):
             "Empfehlung": f"Fehler: {str(e)}"
         })
 
-        # Neue, intelligentere Logik
-        if perf_pct > 50:
-            recommendation = "Klar verkaufen"
-        elif perf_pct > 25:
-            recommendation = "Teilweise verkaufen"
-        elif perf_pct >= 0:
-            recommendation = "Halten"
-        elif perf_pct > -10:
-            recommendation = "Beobachten"
-        elif perf_pct > -20:
-            recommendation = "Beobachten / evtl. Nachkaufen"
-        elif perf_pct > -30:
-            recommendation = "Beobachten / Risiko prüfen"
-        else:
-            recommendation = "Verlust begrenzen?"
-
-        return pd.Series({
-            "Aktueller Kurs": round(current_price, 2),
-            "Dividende p.a. (€)": round(dividend, 2) if dividend else 0,
-            "Gewinn/Verlust (€)": round(perf_abs, 2),
-            "Performance (%)": round(perf_pct, 2),
-            "Empfehlung": recommendation
-        })
-
-    except Exception as e:
-        return pd.Series({
-            "Aktueller Kurs": None,
-            "Dividende p.a. (€)": None,
-            "Gewinn/Verlust (€)": None,
-            "Performance (%)": None,
-            "Empfehlung": f"Fehler: {str(e)}"
-        })
 
 # Verarbeitung nach Upload
 if uploaded_file:
@@ -145,19 +112,18 @@ if uploaded_file:
     # 📋 Sortierte Analyseansicht
     st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
 
-    # 🛡️ Sicherheitscheck: Spalte vorhanden?
-    perf_col_name = "Performance (%)"
-    if perf_col_name not in df_analysis.columns:
-        st.error(f"❌ Analyse fehlgeschlagen – Spalte '{perf_col_name}' fehlt. Aktuelle Spalten:")
-        st.write(df_analysis.columns.tolist())
-        st.stop()
-    st.write("📋 Aktuelle Spalten im DataFrame:", df_analysis.columns.tolist())
-    st.error("❌ Analyse fehlgeschlagen – Spalte 'Performance (%)' fehlt. Bitte überprüfe deine Excel-Datei oder die Analysefunktion.")
-    st.write("📋 Aktuelle Spalten im DataFrame:", df_analysis.columns.tolist())
+    # 📋 Sortierte Analyseansicht
+st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
+
+# 🛡️ Sicherheitscheck
+perf_col_name = "Performance (%)"
+if "df_analysis" not in locals() or perf_col_name not in df_analysis.columns:
+    st.error(f"❌ Analyse fehlgeschlagen – '{perf_col_name}' fehlt. Aktuelle Spalten:")
+    st.write(df_analysis.columns.tolist() if "df_analysis" in locals() else "DataFrame 'df_analysis' nicht vorhanden.")
     st.stop()
 
-# ✅ Sortierte Version für Analyse (benötigt für den Rest!)
-df_analysis_view = df_analysis[relevante_spalten].sort_values(by="Performance (%)", ascending=False, na_position="last")
+# ✅ Sortierte Version für Analyse
+df_analysis_view = df_analysis[relevante_spalten].sort_values(by=perf_col_name, ascending=False, na_position="last")
 
 # 🔍 Suchfeld
 search_query = st.text_input("🔎 Aktie suchen (Ticker oder Name)", "")
@@ -169,6 +135,22 @@ filtered_df = df_analysis_view[
 ]
 
 st.dataframe(filtered_df, use_container_width=True)
+
+# 📊 Balkendiagramm Performance
+if not filtered_df.empty:
+    fig_perf = go.Figure()
+    fig_perf.add_trace(go.Bar(
+        x=filtered_df["Ticker"],
+        y=filtered_df["Performance (%)"],
+        text=filtered_df["Performance (%)"],
+        textposition="auto"
+    ))
+    fig_perf.update_layout(
+        title="📊 Performance pro Aktie",
+        xaxis_title="Ticker",
+        yaxis_title="Performance (%)"
+    )
+    st.plotly_chart(fig_perf, use_container_width=True)
 
 # 📊 Balkendiagramm Performance
 if not filtered_df.empty:
