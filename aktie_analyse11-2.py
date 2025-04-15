@@ -52,12 +52,21 @@ def analyze_stock(row):
         info = stock.info
         dividend = info.get("dividendRate", 0.0)
 
-        if perf_pct > 25:
+        # Neue, intelligentere Logik
+        if perf_pct > 50:
+            recommendation = "Klar verkaufen"
+        elif perf_pct > 25:
             recommendation = "Teilweise verkaufen"
-        elif perf_pct < -20:
-            recommendation = "Beobachten / Nachkaufen"
-        else:
+        elif perf_pct >= 0:
             recommendation = "Halten"
+        elif perf_pct > -10:
+            recommendation = "Beobachten"
+        elif perf_pct > -20:
+            recommendation = "Beobachten / evtl. Nachkaufen"
+        elif perf_pct > -30:
+            recommendation = "Beobachten / Risiko prüfen"
+        else:
+            recommendation = "Verlust begrenzen?"
 
         return pd.Series({
             "Aktueller Kurs": round(current_price, 2),
