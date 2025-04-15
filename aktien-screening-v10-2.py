@@ -13,7 +13,6 @@ uploaded_file = st.file_uploader("📥 Lade deine Portfolio/Watchlist Excel-Date
 
 # 📊 Kursverlauf & Kaufpreis visualisieren
 st.subheader("📊 Kursverlauf & Kaufpreis")
-
 for _, row in df_portfolio.iterrows():
     ticker = row["Ticker"]
     data = yf.Ticker(ticker).history(period="5y")
