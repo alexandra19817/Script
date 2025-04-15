@@ -145,8 +145,9 @@ if uploaded_file:
     # 📋 Sortierte Analyseansicht
     st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
 
-# 🛡️ Sicherheitscheck: Spalte vorhanden?
-if "Performance (%)" not in df_analysis.columns:
+    # 🛡️ Sicherheitscheck: Spalte vorhanden?
+    if "Performance (%)" not in df_analysis.columns:
+    st.write("📋 Aktuelle Spalten im DataFrame:", df_analysis.columns.tolist())
     st.error("❌ Analyse fehlgeschlagen – Spalte 'Performance (%)' fehlt. Bitte überprüfe deine Excel-Datei oder die Analysefunktion.")
     st.write("📋 Aktuelle Spalten im DataFrame:", df_analysis.columns.tolist())
     st.stop()
