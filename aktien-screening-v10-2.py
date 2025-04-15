@@ -61,6 +61,12 @@ st.subheader("📊 Kursverlauf & Kaufpreis")
 for index, row in df_portfolio.iterrows():
     ticker = row["Ticker"]
     kaufpreis = row["Kaufpreis (€)"]  # 🛠 passe den Spaltennamen an
+    if "Kaufpreis" in row:
+    kaufpreis = row["Kaufpreis"]
+    # Kursdaten laden und anzeigen
+else:
+    st.warning(f"Kaufpreis fehlt bei {ticker}.")
+
 
     data = yf.Ticker(ticker).history(period="5y")
     if not data.empty:
