@@ -145,7 +145,13 @@ if uploaded_file:
     # 📋 Sortierte Analyseansicht
     st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
 
-# Neu: Sortierte Version für Filter & Chart
+# 🛡️ Sicherheitscheck: Spalte vorhanden?
+if "Performance (%)" not in df_analysis.columns:
+    st.error("❌ Analyse fehlgeschlagen – Spalte 'Performance (%)' fehlt. Bitte überprüfe deine Excel-Datei oder die Analysefunktion.")
+    st.write("📋 Aktuelle Spalten im DataFrame:", df_analysis.columns.tolist())
+    st.stop()
+
+# ✅ Sortierte Version für Analyse (benötigt für den Rest!)
 df_analysis_view = df_analysis[relevante_spalten].sort_values(by="Performance (%)", ascending=False, na_position="last")
 
 # 🔍 Suchfeld
@@ -186,7 +192,6 @@ if not extreme_winners.empty:
 if not extreme_losers.empty:
     st.error("⚠️ Diese Aktien haben über **–50 % Verlust** – prüfe ob Handlungsbedarf besteht.")
     st.dataframe(extreme_losers[["Ticker", "Name", "Performance (%)", "Empfehlung"]])
-
     # 📊 Kursverläufe
     st.subheader("📊 Kursverlauf mit Kaufpreis")
     for index, row in df_portfolio.iterrows():
