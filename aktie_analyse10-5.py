@@ -60,7 +60,7 @@ if uploaded_file:
     # 📈 Analyse ausführen
     st.subheader("🧮 Portfolio-Analyse mit Kurs, Dividende & Empfehlungen")
     df_analysis = df_portfolio.copy()
-    df_analysis = df_analysis.join(df_portfolio.apply(analyze_stock, axis=1))
+    df_analysis = pd.concat([df_portfolio, df_portfolio.apply(analyze_stock, axis=1)], axis=1)
     st.dataframe(df_analysis, use_container_width=True)
 
     # 📊 Kursverlauf + Kaufpreis visualisieren
