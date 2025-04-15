@@ -20,15 +20,15 @@ def analyze_stock(row):
         if data.empty:
             raise ValueError("Keine Kursdaten verfügbar.")
 
-        current_price = data["Close"].iloc[-1]
-        kaufpreis = row["Kaufpreis"]
-        anzahl = row["Anzahl"]
+        current_price = float(data["Close"].iloc[-1])
+        kaufpreis = float(row["Kaufpreis"])
+        anzahl = float(row["Anzahl"])
 
         perf_abs = (current_price - kaufpreis) * anzahl
         perf_pct = ((current_price - kaufpreis) / kaufpreis) * 100
 
         info = stock.info
-        dividend = info.get("dividendRate", 0)
+        dividend = info.get("dividendRate", 0.0)
 
         if perf_pct > 25:
             recommendation = "Teilweise verkaufen"
@@ -68,16 +68,11 @@ if uploaded_file:
 
     # 📈 Analyse ausführen
     st.subheader("🧮 Portfolio-Analyse mit Kurs, Dividende & Empfehlungen")
-    st.subheader("🔍 Test: Einzelne Analyse")
-    # Probiere es nur mit der ersten Zeile
-    first_row = df_portfolio.iloc[0]
-    result = analyze_stock(first_row)
-    st.write("Analyse-Ergebnis für die erste Aktie:")
-    st.write(result)
-    df_analysis = df_portfolio.copy()
-    df_analysis = pd.concat([df_portfolio, df_portfolio.apply(analyze_stock, axis=1)], axis=1)
+
+    df_analysewerte = df_portfolio.apply(analyze_stock, axis=1)
+    df_analysis = df_portfolio.join(df_analysewerte)
+
     st.subheader("📋 Auswertung deines Portfolios")
-    st.dataframe(df_analysis, use_container_width=True)
     st.dataframe(df_analysis, use_container_width=True)
 
     # 📊 Kursverlauf + Kaufpreis visualisieren
