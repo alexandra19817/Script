@@ -15,41 +15,44 @@ def analyze_stock(row):
     ticker = row["Ticker"]
     try:
         stock = yf.Ticker(ticker)
-        hist = stock.history(start=row["Kaufdatum"])
+        data = stock.history(start=row["Kaufdatum"])
+
+        if data.empty:
+            raise ValueError("Keine Kursdaten verfügbar.")
+
+        current_price = data["Close"].iloc[-1]
+        kaufpreis = row["Kaufpreis"]
+        anzahl = row["Anzahl"]
+
+        perf_abs = (current_price - kaufpreis) * anzahl
+        perf_pct = ((current_price - kaufpreis) / kaufpreis) * 100
+
         info = stock.info
+        dividend = info.get("dividendRate", 0)
 
-        if not hist.empty:
-            current_price = hist["Close"].iloc[-1]
-            perf_abs = (current_price - row["Kaufpreis"]) * row["Anzahl"]
-            perf_pct = ((current_price - row["Kaufpreis"]) / row["Kaufpreis"]) * 100
-
-            # Empfehlung basierend auf Performance
-            recommendation = "Halten"
-            if perf_pct > 25:
-                recommendation = "Teilweise verkaufen"
-            elif perf_pct < -20:
-                recommendation = "Beobachten / Nachkaufen"
-
-            # Dividende abrufen
-            info = yf.Ticker(ticker).info
-            dividende = info.get("dividendRate", None)
-            
-            return pd.Series({
-                "Aktueller Kurs (€)": round(current_price, 2),
-                "Dividende p.a. (€)": round(dividend, 2) if dividend else "–",
-                "Gewinn/Verlust (€)": round(perf_abs, 2),
-                "Performance (%)": round(perf_pct, 2),
-                "Empfehlung": recommendation
-            })
+        if perf_pct > 25:
+            recommendation = "Teilweise verkaufen"
+        elif perf_pct < -20:
+            recommendation = "Beobachten / Nachkaufen"
         else:
-             return pd.Series({
-        "Aktueller Kurs": None,
-        "Gewinn/Verlust (€)": None,
-        "Performance (%)": None,
-        "Empfehlung": "Keine Daten"
-    })
+            recommendation = "Halten"
+
+        return pd.Series({
+            "Aktueller Kurs": round(current_price, 2),
+            "Dividende p.a. (€)": round(dividend, 2) if dividend else 0,
+            "Gewinn/Verlust (€)": round(perf_abs, 2),
+            "Performance (%)": round(perf_pct, 2),
+            "Empfehlung": recommendation
+        })
+
     except Exception as e:
-        return pd.Series({})
+        return pd.Series({
+            "Aktueller Kurs": None,
+            "Dividende p.a. (€)": None,
+            "Gewinn/Verlust (€)": None,
+            "Performance (%)": None,
+            "Empfehlung": f"Fehler: {str(e)}"
+        })
 
 if uploaded_file:
     # 📂 Excel einlesen
