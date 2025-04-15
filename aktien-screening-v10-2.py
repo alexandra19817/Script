@@ -11,6 +11,24 @@ st.title("📊 Aktien-Analyse Tool")
 # Datei-Upload
 uploaded_file = st.file_uploader("📥 Lade deine Portfolio/Watchlist Excel-Datei hoch", type=["xlsx"])
 
+# 📊 Kursverlauf & Kaufpreis visualisieren
+st.subheader("📊 Kursverlauf & Kaufpreis")
+
+for _, row in df_portfolio.iterrows():
+    ticker = row["Ticker"]
+    data = yf.Ticker(ticker).history(period="5y")
+
+    if not data.empty:
+        kaufpreis = row["Kaufpreis"]
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=data.index, y=data["Close"], mode="lines", name="Kurs"))
+        fig.add_hline(y=kaufpreis, line_dash="dot", line_color="red", name="Kaufpreis")
+        fig.update_layout(
+            title=f"{ticker} Kursverlauf mit Kaufpreis",
+            xaxis_title="Datum",
+            yaxis_title="Kurs (€)"
+        )
+        st.plotly_chart(fig, use_container_width=True)
 if uploaded_file:
     xls = pd.ExcelFile(uploaded_file)
     df_portfolio = pd.read_excel(xls, sheet_name="Portfolio")
