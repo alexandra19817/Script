@@ -69,11 +69,11 @@ if uploaded_file:
     # 📈 Analyse ausführen
     st.subheader("🧮 Portfolio-Analyse mit Kurs, Dividende & Empfehlungen")
     st.subheader("🔍 Test: Einzelne Analyse")
-# Probiere es nur mit der ersten Zeile
-first_row = df_portfolio.iloc[0]
-result = analyze_stock(first_row)
-st.write("Analyse-Ergebnis für die erste Aktie:")
-st.write(result)df_analysis = df_portfolio.copy()
+    # Probiere es nur mit der ersten Zeile
+    first_row = df_portfolio.iloc[0]
+    result = analyze_stock(first_row)
+    st.write("Analyse-Ergebnis für die erste Aktie:")
+    st.write(result)df_analysis = df_portfolio.copy()
     df_analysis = pd.concat([df_portfolio, df_portfolio.apply(analyze_stock, axis=1)], axis=1)
     st.dataframe(df_analysis, use_container_width=True)
 
