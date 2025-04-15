@@ -76,6 +76,8 @@ if uploaded_file:
     st.write(result)
     df_analysis = df_portfolio.copy()
     df_analysis = pd.concat([df_portfolio, df_portfolio.apply(analyze_stock, axis=1)], axis=1)
+    st.subheader("📋 Auswertung deines Portfolios")
+    st.dataframe(df_analysis, use_container_width=True)
     st.dataframe(df_analysis, use_container_width=True)
 
     # 📊 Kursverlauf + Kaufpreis visualisieren
