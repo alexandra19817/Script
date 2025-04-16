@@ -84,7 +84,6 @@ def analyze_stock(row):
             "Empfehlung": f"Fehler: {str(e)}"
         })
 
-
 # Verarbeitung nach Upload
 if uploaded_file:
     xls = pd.ExcelFile(uploaded_file)
@@ -144,7 +143,7 @@ col5.metric("💰 Ursprünglicher Einsatz", f"{gesamt_einsatz:,.2f} €")
     st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
 
   # 🛡️ Sicherheitscheck
-perf_col_name = "Performance (%)"
+    perf_col_name = "Performance (%)"
 if "df_analysis" not in locals() or perf_col_name not in df_analysis.columns:
     st.error(f"❌ Analyse fehlgeschlagen – '{perf_col_name}' fehlt. Aktuelle Spalten:")
     st.write(df_analysis.columns.tolist() if "df_analysis" in locals() else "DataFrame 'df_analysis' nicht vorhanden.")
