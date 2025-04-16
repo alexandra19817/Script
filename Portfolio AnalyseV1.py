@@ -150,7 +150,7 @@ if not filtered_df.empty:
         xaxis_title="Ticker",
         yaxis_title="Performance (%)"
     )
-    st.plotly_chart(fig_perf, use_container_width=True, key="performance_chart")
+    st.plotly_chart(fig_perf, use_container_width=True, key=f"performance_chart_{search_query}")
 
 # 📊 Balkendiagramm Performance
 if not filtered_df.empty:
@@ -166,7 +166,7 @@ if not filtered_df.empty:
         xaxis_title="Ticker",
         yaxis_title="Performance (%)"
     )
-    st.plotly_chart(fig_perf, use_container_width=True, key="performance_chart")
+    st.plotly_chart(fig_perf, use_container_width=True, key=f"performance_chart_{search_query}")
 
 # 💡 Hinweise bei extremen Fällen
 extreme_winners = filtered_df[filtered_df["Performance (%)"] > 100]
