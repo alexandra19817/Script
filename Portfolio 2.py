@@ -129,20 +129,19 @@ col2.metric("💸 Gewinn/Verlust", f"{gesamt_diff:,.2f} €", delta=f"{gesamt_pe
 col3.metric("📈 Positionen", len(df_summary))
 col4.metric("🏆 Größte Position", f"{top_position['Ticker']}", f"{top_position['Positionswert (€)']:.2f} €")
 col5.metric("💰 Ursprünglicher Einsatz", f"{gesamt_einsatz:,.2f} €")
-
     
-    # 📁 Anzeige des analysierten Portfolios
+# 📁 Anzeige des analysierten Portfolios
     st.subheader("📁 Dein Portfolio (inkl. Analyse)")
     st.dataframe(df_analysis[relevante_spalten], use_container_width=True)
 
-    # 👁️ Watchlist
+# 👁️ Watchlist
     st.subheader("👁️ Deine Watchlist")
     st.dataframe(df_watchlist, use_container_width=True)
 
-    # 📋 Sortierte Analyseansicht
+# 📋 Sortierte Analyseansicht
     st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
 
-  # 🛡️ Sicherheitscheck
+# 🛡️ Sicherheitscheck
     perf_col_name = "Performance (%)"
 if "df_analysis" not in locals() or perf_col_name not in df_analysis.columns:
     st.error(f"❌ Analyse fehlgeschlagen – '{perf_col_name}' fehlt. Aktuelle Spalten:")
