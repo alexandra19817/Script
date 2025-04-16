@@ -106,7 +106,9 @@ if uploaded_file:
     df_analysis["Positionswert (€)"] = df_analysis["Aktueller Kurs"] * df_analysis["Anzahl"]
     df_summary = df_analysis.dropna(subset=["Positionswert (€)", "Kaufpreis"])
     gesamtwert = df_summary["Positionswert (€)"].sum()
-    gesamt_einsatz = (df_summary["Kaufpreis"] * df_summary["Anzahl"]).sum()
+    # Bereinige Kaufpreis (falls noch nicht float)
+    kaufpreise_float = df_summary["Kaufpreis"].apply(clean_kaufpreis)
+    gesamt_einsatz = (kaufpreise_float * df_summary["Anzahl"]).sum()
     gesamt_diff = gesamtwert - gesamt_einsatz
     gesamt_perf_pct = (gesamt_diff / gesamt_einsatz) * 100 if gesamt_einsatz != 0 else 0
     top_position = df_summary.loc[df_summary["Positionswert (€)"].idxmax()]
