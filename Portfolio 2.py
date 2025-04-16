@@ -100,95 +100,82 @@ if uploaded_file:
         "Gewinn/Verlust (€)", "Performance (%)", "Dividende p.a. (€)", "Empfehlung"
     ]
 
-# 📊 Portfolio-Zusammenfassung
-st.subheader("📊 Portfolio-Snapshot")
+    # 📊 Portfolio-Zusammenfassung
+    st.subheader("📊 Portfolio-Snapshot")
 
-# Berechne Positionswert
-df_analysis["Positionswert (€)"] = df_analysis["Aktueller Kurs"] * df_analysis["Anzahl"]
+    df_analysis["Positionswert (€)"] = df_analysis["Aktueller Kurs"] * df_analysis["Anzahl"]
+    df_summary = df_analysis.dropna(subset=["Positionswert (€)", "Kaufpreis"])
+    gesamtwert = df_summary["Positionswert (€)"].sum()
+    gesamt_einsatz = (df_summary["Kaufpreis"] * df_summary["Anzahl"]).sum()
+    gesamt_diff = gesamtwert - gesamt_einsatz
+    gesamt_perf_pct = (gesamt_diff / gesamt_einsatz) * 100 if gesamt_einsatz != 0 else 0
+    top_position = df_summary.loc[df_summary["Positionswert (€)"].idxmax()]
 
-# Nur Positionen mit Kurswert
-df_summary = df_analysis.dropna(subset=["Positionswert (€)", "Kaufpreis"])
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("📦 Gesamtwert", f"{gesamtwert:,.2f} €")
+    col2.metric("💸 Gewinn/Verlust", f"{gesamt_diff:,.2f} €", delta=f"{gesamt_perf_pct:.2f} %")
+    col3.metric("📈 Positionen", len(df_summary))
+    col4.metric("🏆 Größte Position", f"{top_position['Ticker']}", f"{top_position['Positionswert (€)']:.2f} €")
+    col5.metric("💰 Ursprünglicher Einsatz", f"{gesamt_einsatz:,.2f} €")
 
-# Gesamtwert
-gesamtwert = df_summary["Positionswert (€)"].sum()
-
-# Gesamtkosten (Summe: Kaufpreis × Anzahl)
-gesamt_einsatz = (df_summary["Kaufpreis"] * df_summary["Anzahl"]).sum()
-
-# Gewinn/Verlust absolut und prozentual
-gesamt_diff = gesamtwert - gesamt_einsatz
-gesamt_perf_pct = (gesamt_diff / gesamt_einsatz) * 100 if gesamt_einsatz != 0 else 0
-
-# Position mit höchstem Wert
-top_position = df_summary.loc[df_summary["Positionswert (€)"].idxmax()]
-
-# Anzeige
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("📦 Gesamtwert", f"{gesamtwert:,.2f} €")
-col2.metric("💸 Gewinn/Verlust", f"{gesamt_diff:,.2f} €", delta=f"{gesamt_perf_pct:.2f} %")
-col3.metric("📈 Positionen", len(df_summary))
-col4.metric("🏆 Größte Position", f"{top_position['Ticker']}", f"{top_position['Positionswert (€)']:.2f} €")
-col5.metric("💰 Ursprünglicher Einsatz", f"{gesamt_einsatz:,.2f} €")
-    
-# 📁 Anzeige des analysierten Portfolios
+    # 📁 Anzeige des analysierten Portfolios
     st.subheader("📁 Dein Portfolio (inkl. Analyse)")
     st.dataframe(df_analysis[relevante_spalten], use_container_width=True)
 
-# 👁️ Watchlist
+    # 👁️ Watchlist
     st.subheader("👁️ Deine Watchlist")
     st.dataframe(df_watchlist, use_container_width=True)
 
-# 📋 Sortierte Analyseansicht
+    # 📋 Sortierte Analyseansicht
     st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
 
-# 🛡️ Sicherheitscheck
+    # 🛡️ Sicherheitscheck
     perf_col_name = "Performance (%)"
-if "df_analysis" not in locals() or perf_col_name not in df_analysis.columns:
-    st.error(f"❌ Analyse fehlgeschlagen – '{perf_col_name}' fehlt. Aktuelle Spalten:")
-    st.write(df_analysis.columns.tolist() if "df_analysis" in locals() else "DataFrame 'df_analysis' nicht vorhanden.")
-    st.stop()
+    if "df_analysis" not in locals() or perf_col_name not in df_analysis.columns:
+        st.error(f"❌ Analyse fehlgeschlagen – '{perf_col_name}' fehlt.")
+        st.write(df_analysis.columns.tolist() if "df_analysis" in locals() else "DataFrame 'df_analysis' nicht vorhanden.")
+        st.stop()
 
-# ✅ Sortierte Version für Analyse
-df_analysis_view = df_analysis[relevante_spalten].sort_values(by=perf_col_name, ascending=False, na_position="last")
+    df_analysis_view = df_analysis[relevante_spalten].sort_values(by=perf_col_name, ascending=False, na_position="last")
 
-# 🔍 Suchfeld
-search_query = st.text_input("🔎 Aktie suchen (Ticker oder Name)", "")
+    # 🔍 Suchfeld
+    search_query = st.text_input("🔎 Aktie suchen (Ticker oder Name)", "")
 
-# 🔄 Gefilterte Ansicht
-filtered_df = df_analysis_view[
-    df_analysis_view["Ticker"].str.contains(search_query, case=False, na=False) |
-    df_analysis_view["Name"].astype(str).str.contains(search_query, case=False, na=False)
-]
+    filtered_df = df_analysis_view[
+        df_analysis_view["Ticker"].str.contains(search_query, case=False, na=False) |
+        df_analysis_view["Name"].astype(str).str.contains(search_query, case=False, na=False)
+    ]
 
-st.dataframe(filtered_df, use_container_width=True)
+    st.dataframe(filtered_df, use_container_width=True)
 
-# 📊 Balkendiagramm Performance
-if not filtered_df.empty:
-    fig_perf = go.Figure()
-    fig_perf.add_trace(go.Bar(
-        x=filtered_df["Ticker"],
-        y=filtered_df["Performance (%)"],
-        text=filtered_df["Performance (%)"],
-        textposition="auto"
-    ))
-    fig_perf.update_layout(
-        title="📊 Performance pro Aktie",
-        xaxis_title="Ticker",
-        yaxis_title="Performance (%)"
-    )
-    st.plotly_chart(fig_perf, use_container_width=True, key=f"performance_chart_{search_query}")
+    # 📊 Balkendiagramm Performance
+    if not filtered_df.empty:
+        fig_perf = go.Figure()
+        fig_perf.add_trace(go.Bar(
+            x=filtered_df["Ticker"],
+            y=filtered_df["Performance (%)"],
+            text=filtered_df["Performance (%)"],
+            textposition="auto"
+        ))
+        fig_perf.update_layout(
+            title="📊 Performance pro Aktie",
+            xaxis_title="Ticker",
+            yaxis_title="Performance (%)"
+        )
+        st.plotly_chart(fig_perf, use_container_width=True, key=f"performance_chart_{search_query}")
 
-# 💡 Hinweise bei extremen Fällen
-extreme_winners = filtered_df[filtered_df["Performance (%)"] > 100]
-extreme_losers = filtered_df[filtered_df["Performance (%)"] < -50]
+    # 💡 Hinweise bei extremen Fällen
+    extreme_winners = filtered_df[filtered_df["Performance (%)"] > 100]
+    extreme_losers = filtered_df[filtered_df["Performance (%)"] < -50]
 
-if not extreme_winners.empty:
-    st.success("🚀 Diese Aktien haben über **+100 % Performance** erreicht!")
-    st.dataframe(extreme_winners[["Ticker", "Name", "Performance (%)", "Empfehlung"]])
+    if not extreme_winners.empty:
+        st.success("🚀 Diese Aktien haben über **+100 % Performance** erreicht!")
+        st.dataframe(extreme_winners[["Ticker", "Name", "Performance (%)", "Empfehlung"]])
 
-if not extreme_losers.empty:
-    st.error("⚠️ Diese Aktien haben über **–50 % Verlust** – prüfe ob Handlungsbedarf besteht.")
-    st.dataframe(extreme_losers[["Ticker", "Name", "Performance (%)", "Empfehlung"]])
+    if not extreme_losers.empty:
+        st.error("⚠️ Diese Aktien haben über **–50 % Verlust** – prüfe ob Handlungsbedarf besteht.")
+        st.dataframe(extreme_losers[["Ticker", "Name", "Performance (%)", "Empfehlung"]])
+
     # 📊 Kursverläufe
     st.subheader("📊 Kursverlauf mit Kaufpreis")
     for index, row in df_portfolio.iterrows():
@@ -237,5 +224,6 @@ if not extreme_losers.empty:
     st.download_button("⬇️ Download aktualisierte Excel-Datei", data=excel_buffer,
                        file_name="portfolio_auswertung.xlsx",
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 else:
     st.info("⬆️ Bitte lade deine Excel-Datei hoch (mit den Sheets: Portfolio & Watchlist)")
