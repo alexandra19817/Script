@@ -101,6 +101,37 @@ if uploaded_file:
         "Gewinn/Verlust (€)", "Performance (%)", "Dividende p.a. (€)", "Empfehlung"
     ]
 
+# 📊 Portfolio-Zusammenfassung
+st.subheader("📊 Portfolio-Snapshot")
+
+# Berechne Positionswert
+df_analysis["Positionswert (€)"] = df_analysis["Aktueller Kurs"] * df_analysis["Anzahl"]
+
+# Nur Positionen mit Kurswert
+df_summary = df_analysis.dropna(subset=["Positionswert (€)", "Kaufpreis"])
+
+# Gesamtwert
+gesamtwert = df_summary["Positionswert (€)"].sum()
+
+# Gesamtkosten (Summe: Kaufpreis × Anzahl)
+gesamt_einsatz = (df_summary["Kaufpreis"] * df_summary["Anzahl"]).sum()
+
+# Gewinn/Verlust absolut und prozentual
+gesamt_diff = gesamtwert - gesamt_einsatz
+gesamt_perf_pct = (gesamt_diff / gesamt_einsatz) * 100 if gesamt_einsatz != 0 else 0
+
+# Position mit höchstem Wert
+top_position = df_summary.loc[df_summary["Positionswert (€)"].idxmax()]
+
+# Anzeige
+col1, col2, col3, col4, col5 = st.columns(5)
+col1.metric("📦 Gesamtwert", f"{gesamtwert:,.2f} €")
+col2.metric("💸 Gewinn/Verlust", f"{gesamt_diff:,.2f} €", delta=f"{gesamt_perf_pct:.2f} %")
+col3.metric("📈 Positionen", len(df_summary))
+col4.metric("🏆 Größte Position", f"{top_position['Ticker']}", f"{top_position['Positionswert (€)']:.2f} €")
+col5.metric("💰 Ursprünglicher Einsatz", f"{gesamt_einsatz:,.2f} €")
+
+    
     # 📁 Anzeige des analysierten Portfolios
     st.subheader("📁 Dein Portfolio (inkl. Analyse)")
     st.dataframe(df_analysis[relevante_spalten], use_container_width=True)
