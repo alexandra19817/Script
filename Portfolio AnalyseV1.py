@@ -112,10 +112,7 @@ if uploaded_file:
     # 📋 Sortierte Analyseansicht
     st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
 
-    # 📋 Sortierte Analyseansicht
-st.subheader("📋 Auswertung deines Portfolios (sortiert nach Performance)")
-
-# 🛡️ Sicherheitscheck
+  # 🛡️ Sicherheitscheck
 perf_col_name = "Performance (%)"
 if "df_analysis" not in locals() or perf_col_name not in df_analysis.columns:
     st.error(f"❌ Analyse fehlgeschlagen – '{perf_col_name}' fehlt. Aktuelle Spalten:")
