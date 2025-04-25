@@ -1,92 +1,72 @@
 import streamlit as st
-import pandas as pd
 import requests
+import pandas as pd
 
-# Titel der App
+st.set_page_config("🌱📈 ESG & Wachstums-Scanner", layout="centered")
 st.title("🌱📈 ESG & Wachstums-Scanner")
 
-# Beispielhafte Tickerliste (Top 10, erweiterbar auf 50-100)
+st.subheader("🗂️ Übersicht deiner Aktienanalyse:")
+
+# Tickerliste
 tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA"]
 
-# API-Header (deinen API-Key hier einfügen oder via st.secrets laden)
-headers = {
-    "X-RapidAPI-Key": st.secrets.get("RAPIDAPI", {}).get("key", ""),
+# API-Zugriff
+API_KEY = st.secrets["RAPIDAPI"]["key"]
+HEADERS = {
+    "X-RapidAPI-Key": API_KEY,
     "X-RapidAPI-Host": "yahoo-finance127.p.rapidapi.com"
 }
 
-# Hilfsfunktion zum Datenabruf und Berechnung
-def get_stock_data(ticker):
-    url = f"https://yahoo-finance127.p.rapidapi.com/stock/v2/get-summary?symbol={ticker}&region=US"
-    response = requests.get(url, headers=headers)
+data_list = []
 
-    if response.status_code != 200:
-        return None
+# Loop durch alle Ticker
+for symbol in tickers:
+    st.write(f"🔍 Abrufe Daten für: `{symbol}` ...")
 
-    data = response.json()
-    fin_data = data.get("financialData", {})
-    summary_data = data.get("price", {})
+    url = f"https://yahoo-finance127.p.rapidapi.com/esg-scores/{symbol}"
+    response = requests.get(url, headers=HEADERS)
 
-    return {
-        "Ticker": ticker,
-        "Aktienkurs ($)": summary_data.get("regularMarketPrice", {}).get("raw"),
-        "Marktkapitalisierung ($)": summary_data.get("marketCap", {}).get("raw"),
-        "Branche": summary_data.get("sector", "N/A"),
-        "KGV": fin_data.get("trailingPE", {}).get("raw"),
-        "EPS": fin_data.get("earningsPerShare", {}).get("raw"),
-        "Umsatz (Mrd $)": (fin_data.get("totalRevenue", {}).get("raw", 0)) / 1e9,
-        "Gewinnmarge (%)": (fin_data.get("profitMargins", {}).get("raw", 0)) * 100,
-        "Schuldenquote (%)": fin_data.get("debtToEquity", {}).get("raw"),
-        "Dividendenrendite (%)": (fin_data.get("dividendYield", {}).get("raw", 0)) * 100,
-        "Performance YTD (%)": fin_data.get("52WeekChange", {}).get("raw", 0) * 100,
-    }
+    st.write(f"📡 Status Code für {symbol}: {response.status_code}")
 
-# Daten sammeln
-results = []
-for ticker in tickers:
-    stock_info = get_stock_data(ticker)
-    if stock_info:
-        results.append(stock_info)
+    if response.status_code == 200:
+        try:
+            result = response.json()
+            esg = result.get("totalEsg", {}).get("raw")
+            env = result.get("environmentScore", {}).get("raw")
+            soc = result.get("socialScore", {}).get("raw")
+            gov = result.get("governanceScore", {}).get("raw")
 
-# DataFrame erstellen
-df = pd.DataFrame(results)
+            data_list.append({
+                "Ticker": symbol,
+                "🌿 ESG Score": esg,
+                "🌍 Environment": env,
+                "👥 Social": soc,
+                "🏛️ Governance": gov
+            })
+        except Exception as e:
+            st.error(f"❌ Fehler beim Verarbeiten der Antwort für {symbol}: {e}")
+    else:
+        st.warning(f"⚠️ Fehler beim Abrufen von {symbol} (Status: {response.status_code})")
 
-# Automatische Bewertung basierend auf Regeln
-def bewertung(row):
-    try:
-        if pd.notnull(row["KGV"]) and pd.notnull(row["Gewinnmarge (%)"]) and pd.notnull(row["Schuldenquote (%)"]):
-            if row["KGV"] < 20 and row["Gewinnmarge (%)"] > 10 and row["Schuldenquote (%)"] < 50:
-                return "✅ Kaufen"
-            elif 20 <= row["KGV"] <= 30:
-                return "⚠️ Beobachten"
-            else:
-                return "❌ Riskant"
+# DataFrame erstellen und anzeigen
+if data_list:
+    df = pd.DataFrame(data_list)
+
+    # Beispielbewertung basierend auf ESG
+    def bewertung(row):
+        if row["🌿 ESG Score"] and row["🌿 ESG Score"] > 80:
+            return "✅ Top ESG"
+        elif row["🌿 ESG Score"] and row["🌿 ESG Score"] > 60:
+            return "🟡 Ok"
         else:
-            return "❓ Keine ausreichenden Daten"
-    except:
-        return "❓ Fehler bei Bewertung"
+            return "❌ Niedrig"
 
-df["📌 Bewertung"] = df.apply(bewertung, axis=1)
+    df["📌 Bewertung"] = df.apply(bewertung, axis=1)
 
-# Farbliche Darstellung
-def highlight_rows(row):
-    color = "white"
-    if row["📌 Bewertung"] == "✅ Kaufen":
-        color = "#d4edda"  # Grün
-    elif row["📌 Bewertung"] == "⚠️ Beobachten":
-        color = "#fff3cd"  # Gelb
-    elif row["📌 Bewertung"] == "❌ Riskant":
-        color = "#f8d7da"  # Rot
-    return [f"background-color: {color}" for _ in row]
+    st.dataframe(df)
 
-# Ausgabe
-st.subheader("📋 Übersicht deiner Aktienanalyse:")
-st.dataframe(df.style.apply(highlight_rows, axis=1), use_container_width=True)
-
-# Download-Option
-csv = df.to_csv(index=False).encode('utf-8')
-st.download_button(
-    label="⬇️ Ergebnisse als CSV speichern",
-    data=csv,
-    file_name='esg_growth_scanner.csv',
-    mime='text/csv'
-)
+    # Downloadbutton
+    csv = df.to_csv(index=False).encode("utf-8")
+    st.download_button("💾 Ergebnisse als CSV speichern", csv, "esg_ergebnisse.csv", "text/csv")
+else:
+    st.warning("⚠️ Keine Daten geladen. Überprüfe API-Schlüssel und Ticker.")
