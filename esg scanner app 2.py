@@ -42,7 +42,7 @@ def get_stock_data(ticker):
 
 # Daten sammeln
 results = []
-for ticker in ticker_list:
+for ticker in tickers:
     stock_info = get_stock_data(ticker)
     if stock_info:
         results.append(stock_info)
