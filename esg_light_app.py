@@ -12,10 +12,16 @@ ticker_input = st.text_input("🔎 Ticker eingeben (z.B. AAPL, MSFT, TSLA)", "AA
 tickers = [t.strip().upper() for t in ticker_input.split(",") if t.strip()]
 
 # --- API-Key ---
-API_KEY = st.secrets["RAPIDAPI"]["key"]  # Sichere API-Key-Verwaltung
+API_KEY = st.secrets.get("RAPIDAPI", {}).get("key", "")
+
+if not API_KEY:
+    st.error("❌ API-Key fehlt. Bitte stelle sicher, dass dein Key korrekt in den Secrets hinterlegt ist.")
+    st.stop()
+
 HEADERS = {
     "X-RapidAPI-Key": API_KEY,
     "X-RapidAPI-Host": "stock-pulse.p.rapidapi.com"
+}
 }
 
 # --- Analysefunktion ---
