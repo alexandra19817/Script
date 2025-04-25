@@ -11,7 +11,7 @@ if ticker:
     base_url = "https://yahoo-finance127.p.rapidapi.com/stock/v2/get-summary"
     params = {"symbol": ticker, "region": "US"}
     headers = {
-        "x-rapidapi-key": "YOUR_RAPIDAPI_KEY",  # <--- RapidAPI API-Key hier einsetzen
+        "x-rapidapi-key": "475144edcemshb099c7a946dfa28p145a29jsn18d5b7af5186",  # <--- RapidAPI API-Key hier einsetzen
         "x-rapidapi-host": "yahoo-finance127.p.rapidapi.com"
     }
 
