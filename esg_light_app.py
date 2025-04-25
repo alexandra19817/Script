@@ -22,7 +22,6 @@ HEADERS = {
     "X-RapidAPI-Key": API_KEY,
     "X-RapidAPI-Host": "stock-pulse.p.rapidapi.com"
 }
-}
 
 # --- Analysefunktion ---
 def analyse_aktie(ticker):
