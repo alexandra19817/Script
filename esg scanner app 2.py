@@ -6,10 +6,7 @@ import requests
 st.title("🌱📈 ESG & Wachstums-Scanner")
 
 # Beispielhafte Tickerliste (Top 10, erweiterbar auf 50-100)
-ticker_list = [
-    "AAPL", "MSFT", "TSLA", "GOOGL", "NVDA",
-    "AMZN", "META", "NFLX", "INTC", "AMD"
-]
+tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA"]
 
 # API-Header (deinen API-Key hier einfügen oder via st.secrets laden)
 headers = {
