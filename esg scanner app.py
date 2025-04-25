@@ -55,18 +55,35 @@ df = pd.DataFrame(results)
 
 # Automatische Bewertung basierend auf Regeln
 def bewertung(row):
-    if row["KGV"] and row["KGV"] < 20 and row["Gewinnmarge (%)"] > 10 and row["Schuldenquote (%)"] < 50:
-        return "✅ Kaufen"
-    elif row["KGV"] and 20 <= row["KGV"] <= 30:
-        return "⚠️ Beobachten"
-    else:
-        return "❌ Riskant"
+    try:
+        if pd.notnull(row["KGV"]) and pd.notnull(row["Gewinnmarge (%)"]) and pd.notnull(row["Schuldenquote (%)"]):
+            if row["KGV"] < 20 and row["Gewinnmarge (%)"] > 10 and row["Schuldenquote (%)"] < 50:
+                return "✅ Kaufen"
+            elif 20 <= row["KGV"] <= 30:
+                return "⚠️ Beobachten"
+            else:
+                return "❌ Riskant"
+        else:
+            return "❓ Keine ausreichenden Daten"
+    except:
+        return "❓ Fehler bei Bewertung"
 
 df["📌 Bewertung"] = df.apply(bewertung, axis=1)
 
+# Farbliche Darstellung
+def highlight_rows(row):
+    color = "white"
+    if row["📌 Bewertung"] == "✅ Kaufen":
+        color = "#d4edda"  # Grün
+    elif row["📌 Bewertung"] == "⚠️ Beobachten":
+        color = "#fff3cd"  # Gelb
+    elif row["📌 Bewertung"] == "❌ Riskant":
+        color = "#f8d7da"  # Rot
+    return [f"background-color: {color}" for _ in row]
+
 # Ausgabe
 st.subheader("📋 Übersicht deiner Aktienanalyse:")
-st.dataframe(df, use_container_width=True)
+st.dataframe(df.style.apply(highlight_rows, axis=1), use_container_width=True)
 
 # Download-Option
 csv = df.to_csv(index=False).encode('utf-8')
